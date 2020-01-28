@@ -1,0 +1,79 @@
+---
+title: "master"
+---
+
+## Set the directory 
+```{r dir, echo=TRUE}
+setwd("F:/Habeba/Data Science/Slides/5.Reproducible Research/Week 2/Assignment")
+```
+
+## Read the file 
+```{r read_dir, echo=TRUE}
+activity_dataset <- read.csv("activity.csv")
+```
+## Claculate total steps for each day
+```{r tot_stps, echo=TRUE}
+total_steps <- aggregate(activity_dataset$steps , list(datee = activity_dataset$date), sum)
+```
+
+## Creating Hist plot 
+```{r hist_plot, echo=TRUE}
+hist(total_steps$x , main= "Total steps per day")
+```
+
+
+## Calculating mean and median for total steps per day
+```{r mean_med, echo=TRUE}
+total_steps_mean <- mean(total_steps$x , na.rm = TRUE)
+total_steps_median <- median(total_steps$x , na.rm = TRUE)
+```
+The mean is `r total_steps_mean` and the median is `r total_steps_median`.
+
+## For creating Time Series Plot
+```{r time_series_plot, echo=TRUE}
+library(ggplot2)
+avf_steps <- aggregate(steps~interval,activity_dataset, mean)
+ggplot(data = avf_steps , aes(x=interval, y = steps) , type="I", main= "Average Daily Activity Pattern" , xlab="5-minute Interval", ylab= "Average Number of Steps") + geom_line()
+```
+
+## Calculate maximum of average steps per day
+```{r maxi_steps, echo=TRUE}
+ max_mean_steps <- avf_steps[which.max(avf_steps$steps),]
+```
+The mmaximum steps is `r max_mean_steps`
+
+##For calculating total NA and remove them
+```{r NA, echo=TRUE}
+ missingVals <- is.na(activity_dataset$steps)
+withoutNA_activity_dataset <- transform(activity_dataset,steps = ifelse(is.na(activity_dataset$steps),avf_steps$steps[match(activity_dataset$interval,avf_steps$interval)],activity_dataset$steps))
+total_steps_withoutNA <- aggregate(steps~ date , withoutNA_activity_dataset, sum)
+hist(total_steps_withoutNA$steps , main= "Total steps per day without null")
+```
+
+
+## Calculate mean and median of data without NA
+```{r NA_mean_med, echo=TRUE}
+ total_steps_mean_withoutNA <- mean(total_steps_withoutNA$steps , na.rm = TRUE)
+total_steps_median_withoutNA <- median(total_steps_withoutNA$steps , na.rm = TRUE)
+```
+The mean is `r total_steps_mean_withoutNA` and the median is `r total_steps_median_withoutNA`.
+
+## Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
+```{r comparing, echo=TRUE}
+DayType <- function(date)
+ {
+   day <- weekdays(date)
+   if (day %in% c('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'))
+       return ("weekeday")
+   else if (day %in% c('Saturday', 'Sunday'))
+return ("weekend")
+   else
+       stop ("Invalid Date Format.")
+}
+activity_dataset$date <- as.Date(activity_dataset$date)
+activity_dataset$day <- sapply(activity_dataset$date, DayType)
+meanStepsByDay <- aggregate(steps ~ interval + day, activity_dataset, mean)
+ggplot(data = meanStepsByDay, aes(x = interval, y = steps) , main = "Average Daily Activity Pattern" , xlab = "5-minute Interval" , ylab = "Average Number of Steps" ) +
+  geom_line() +
+  facet_grid(day ~ .) 
+```
